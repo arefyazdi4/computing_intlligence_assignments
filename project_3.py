@@ -3,28 +3,54 @@ from tensorflow import keras
 import numpy as np
 
 
-def vectorize_sequences(sequences, dimension=10000):
+def vectorized_sequences(sequences, dimension=10000):
     results = np.zeros((len(sequences), dimension))
     for i, sequence in enumerate(sequences):
         results[i, sequence] = 1.
     return results
 
 
-if __name__ == '__main__':
-    # loading limited number of word
-    (train_data, train_labels), (test_data, test_labels) = imdb.load_data(num_words=10000)
-    print(train_data[1])
+def decode_review(review: list[int]) -> str:
     # decode on of reviews
     word_index = imdb.get_word_index()
     reverse_word_index = dict(
         [(value, key) for (key, value) in word_index.items()])
     decoded_review = ' '.join(
-        [reverse_word_index.get(i - 3, '?') for i in train_data[1]])  # ? if value couldn't be find
-    print(decoded_review)
+        [reverse_word_index.get(i - 3, '?') for i in review])  # ? if value couldn't be find
+    # 0 for padding , 1 for start , 2 for unknown
+    return decoded_review
+
+
+def encode_review(reviews: list[str]) -> list[list[int]]:
+    word_index = imdb.get_word_index()
+    encoded_reviews = list()
+    for review in reviews:
+        encoded_review: list[int] = [word_index.get(word, -1)+3 for word in review]
+        encoded_review.insert(0, 1)
+        encoded_reviews.append(encoded_review)
+    return encoded_reviews
+
+
+def grading_movie(predict_percent:float):
+    grade = "unknown"
+    if predict_percent >= 80:
+        grade = "great movie"
+    elif predict_percent >= 65:
+        grade = 'it\'s good movie'
+    elif predict_percent >= 40:
+        grade = 'hard to tell how was it'
+    else:
+        grade = 'Couldn\'t be Worse than this'
+
+    return grade
+
+
+if __name__ == '__main__':
+    # loading limited number of word
+    (train_data, train_labels), (test_data, test_labels) = imdb.load_data(num_words=10000)
     # Encoding the integer sequences via one-hot encoding
-    x_train = vectorize_sequences(train_data)
-    x_test = vectorize_sequences(test_data)
-    print(x_train[0])
+    x_train = vectorized_sequences(train_data)
+    x_test = vectorized_sequences(test_data)
     # vectorized your labels
     y_train = np.asarray(train_labels).astype('float32')
     y_test = np.asarray(test_labels).astype('float32')
@@ -66,12 +92,8 @@ if __name__ == '__main__':
                      'and have a good old laugh at how bad everything was back then '
                      ]
 
-    sample_decode = [[], []]
-    for index, review in enumerate(sample_review):
-        sample_decode[index] = [word_index.get(word, -1)+3 for word in review]
-        sample_decode[index].insert(0, 1)
+    sample_reviews_encode = encode_review(sample_review)
+    sample_review_vectorized = vectorized_sequences(sample_reviews_encode)
 
-    sample_vectorize = vectorize_sequences(sample_decode)
-
-    predict = model.predict(sample_vectorize)
-    print(predict)
+    predict = model.predict(sample_review_vectorized)
+    print(grading_movie(predict))
