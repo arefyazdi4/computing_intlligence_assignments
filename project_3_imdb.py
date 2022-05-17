@@ -95,5 +95,7 @@ if __name__ == '__main__':
     sample_reviews_encode = encode_review(sample_review)
     sample_review_vectorized = vectorized_sequences(sample_reviews_encode)
 
-    predict = model.predict(sample_review_vectorized)
-    print(grading_movie(predict))
+    predicts = model.predict(sample_review_vectorized)
+    print(type(predicts))
+    for index, predict in enumerate(predicts):
+        print(f'review number{index}: ', grading_movie(predict))
